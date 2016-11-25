@@ -5,19 +5,22 @@ class MergeSort
 	{
 		a = _a;
 	}
-	public void sort(int left,int right)
+	public void merge_sort()
+	{
+		partition(0,a.length-1);
+	}
+	public void partition(int left,int right)
 	{
 		
 		if(left < right)
 		{
 			int mid = (left + right) / 2;
-			sort(left,mid);
-			sort(mid + 1 , right);
-			
-			merge_sort(left,mid,right);
+			partition(left,mid);
+			partition(mid + 1 , right);
+			merge(left,mid,right);
 		}
 	}
-	public void merge_sort(int left,int mid,int right)
+	public void merge(int left,int mid,int right)
 	{
 		int p = left;
 		int q = mid + 1;
@@ -44,9 +47,5 @@ class MergeSort
 		{
 			a[left++] = b[i];
 		}
-	}
-	public int[] getSortArr()
-	{
-		return a;
 	}
 }

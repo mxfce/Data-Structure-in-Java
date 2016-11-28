@@ -1,24 +1,120 @@
-class AVLTree
+class SplayTree
 {
 	Node root;
-	int size = 0;
 	class Node
 	{
 		Node left;
 		Node right;
-		long key;
-		int height = 0;
-		Node(long _key)
+		int key;
+		Node(int _key)
 		{
 			key = _key;
 		}
 	}
-	public int getHeight(Node root)
+	public Node splay(Node root,int key)
+	{
+		if(root == null || key == root.key)
+			return root;
+		
+		if(key < root.key)
+		{
+			//key doesn't exist in tree
+			if(root.left == null)
+				return root;
+			// zig
+			if(key < root.left.key)
+			{
+				root.left.left = splay(root.left.left,key);
+				root = rightRotate(root);
+			}
+			//zag
+			else if(key > root.left.key)
+			{
+				root.left.right = splay(root.left.right,key);
+				if(root.left.right != null)
+					root.left = leftRotate(root.left);
+			}
+			//zig
+			return root.left == null ? root : rightRotate(root);
+		}
+		else
+		{
+			//key doesn't exist in tree
+			if(root.right == null)
+				return root;
+			//zag
+			if(key > root.right.key)
+			{
+				root.right.right = splay(root.right.right,key);
+				root = leftRotate(root);
+			}
+			//zig
+			else if(key < root.right.key)
+			{
+				root.right.left = splay(root.right.left,key);
+				if(root.right.left != null)
+					root.right = rightRotate(root.right);
+			}
+			//zag
+			return root.right == null ? root : leftRotate(root);
+		}
+		
+	}
+	public void insert(int key)
 	{
 		if(root == null)
-			return -1;
-		return root.height;
+			root = new Node(key);
+		else
+		{
+			root = splay(root,key);
+			if(key < root.key)
+			{
+				Node x = root;
+				root = new Node(key);
+				root.right = x;
+				root.left = x.left;
+				x.left = null;
+			}
+			else if(key > root.key)
+			{
+				Node x = root;
+				root = new Node(key);
+				root.left = x;
+				root.right = x.right;
+				x.right = null;
+			}
+		}
 	}
+	public boolean search(int key)
+	{
+		root = splay(root,key);
+		if(key == root.key)
+			return true;
+		return false;
+	}
+	public boolean delete(int key)
+	{
+		root = splay(root,key);
+		if(root == null)
+			return false;
+		else if(key == root.key)
+		{
+			if(root.left == null)
+			{
+				root = root.right;
+			}
+			else
+			{
+				Node x = root;
+				root = splay(root.left,key);
+				root.right = x.right;
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	//helper function
 	public Node leftRotate(Node root)
 	{
 		Node x = root;
@@ -27,8 +123,6 @@ class AVLTree
 		x.right = y.left;
 		y.left = x;
 		
-		x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
-		y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
 		
 		return y;
 	}
@@ -40,122 +134,7 @@ class AVLTree
 		x.left = y.right;
 		y.right = x;
 		
-		x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
-		y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
-		
 		return y;
-	}
-	private int getBalance(Node root)
-	{
-		return getHeight(root.left) - getHeight(root.right);
-	}
-	public void insert(long key)
-	{
-		root = insertRec(root,key);
-	}
-	public Node insertRec(Node root,long key)
-	{
-		if(root == null)
-			return new Node(key);
-		else if(key == root.key)
-			return root;
-		else if(key > root.key)
-			root.right = insertRec(root.right,key);
-		else
-			root.left = insertRec(root.left,key);
-		
-		root.height = Math.max(getHeight(root.right),getHeight(root.left)) + 1;
-		int balance = getBalance(root);
-		
-		
-		if(balance < -1 && key > root.right.key)
-			return leftRotate(root);
-		if(balance < -1 && key < root.right.key)
-		{
-			root.right = rightRotate(root.right);
-			return leftRotate(root);
-		}
-		if(balance > 1 && key < root.left.key)
-			return rightRotate(root);
-		if(balance > 1 && key > root.left.key)
-		{
-			root.left = leftRotate(root.left);
-			return rightRotate(root);
-		}
-		return root;
-		
-	}
-	public void delete(long key)
-	{
-		root = deleteRec(root,key);
-	}
-	public Node deleteRec(Node root,long key)
-	{
-		if(root == null)
-		{
-			return root;
-		}
-		else if(key > root.key)
-		{
-			root.right = deleteRec(root.right,key);
-		}
-		else if(key < root.key)
-		{
-			root.left = deleteRec(root.left,key);
-		}
-		else
-		{
-			if(root.left == null)
-				return root.right;
-			else if(root.right == null)
-				return root.left;
-			else
-			{
-				long successor = getMin(root.right).key;
-				root.key = successor;
-				root.right = deleteRec(root.right,successor);
-			}
-		}
-		root.height = Math.max(getHeight(root.left), getHeight(root.right)) + 1;
-		int balance = getBalance(root);
-		if(balance < -1 && getBalance(root.right) <= 0)
-			return leftRotate(root);
-		if(balance < -1 && getBalance(root.right) > 0)
-		{
-			root.right = rightRotate(root.right);
-			return leftRotate(root);
-		}
-		if(balance > 1 && getBalance(root.left) >= 0)
-			return rightRotate(root);
-		if(balance > 1 && getBalance(root.left) < 0)
-		{
-			root.left = leftRotate(root.left);
-			return rightRotate(root);
-		}
-		return root;
-	}
-	public Node getMin(Node root)
-	{
-		if(root.left == null)
-			return root;
-		return getMin(root.left);
-		
-	}
-	public boolean search(Node root,long key)
-	{
-		if(root == null)
-			return false;
-		
-		else if(key > root.key)
-			return search(root.right,key);
-		else if(key < root.key)
-			return search(root.left,key);
-		else
-			return true;
-	}
-	public void display()
-	{
-		inorder(root);
 	}
 	public void inorder(Node root)
 	{
@@ -165,5 +144,4 @@ class AVLTree
 		System.out.println(root.key);
 		inorder(root.right);
 	}
-	
 }
